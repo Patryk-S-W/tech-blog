@@ -1,9 +1,5 @@
 # TechBlog
 
-[![Run on Repl.it](https://repl.it/badge/github/Patryk-S-W/tech-blog-frontend)](https://repl.it/github/Patryk-S-W/tech-blog-frontend)
-
-[![StackBlitz Demo](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/Patryk-S-W/tech-blog-frontend)
-
 ![Angular17](https://img.shields.io/badge/Angular-17-brightgreen)
 ![Vercel](https://img.shields.io/github/deployments/Patryk-S-W/tech-blog-frontend/production.svg?logo=vercel&label=vercel)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Patryk-S-W_tech-blog-frontend&metric=alert_status)](https://sonarcloud.io/dashboard?id=Patryk-S-W_tech-blog-frontend)
