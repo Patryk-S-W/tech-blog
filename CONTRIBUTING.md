@@ -1,4 +1,4 @@
-# Contributing to Transcriptase
+# Contributing to TechBlog
 
 We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
 
@@ -29,7 +29,7 @@ In short, when you submit code changes, your submissions are understood to be un
 
 ## Report bugs using Github's [issues](https://github.com/Patryk-S-W/tech-blog-frontend/issues)
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/Patryk-S-W/tech-blog-frontend/issues/new/choose) it's that easy!
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/Patryk-S-W/tech-blog/issues/new/choose).
 
 **Great Bug Reports** tend to have:
 
