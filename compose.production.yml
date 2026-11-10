@@ -1,0 +1,52 @@
+name: tech-blog
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    network_mode: host
+    restart: unless-stopped
+    command: ["postgres", "-c", "listen_addresses=127.0.0.1", "-p", "15432"]
+    environment:
+      POSTGRES_DB: techblog
+      POSTGRES_USER: techblog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 15432 -U techblog -d techblog"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: tech-blog-backend:${RELEASE:?RELEASE is required}
+    build:
+      context: ./backend
+      network: host
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://127.0.0.1:18080
+      ConnectionStrings__Postgres_Db: "Host=127.0.0.1;Port=15432;Database=techblog;Username=techblog;Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
+      AppSettings__Token: ${JWT_SECRET:?JWT_SECRET is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: tech-blog-frontend:${RELEASE:?RELEASE is required}
+    build:
+      context: ./frontend
+      network: host
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      BACKEND_UPSTREAM: 127.0.0.1:18080
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  postgres_data:
+    name: tech-blog_postgres_data
