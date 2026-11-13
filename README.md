@@ -7,14 +7,14 @@ and backend as Git submodules.
 ## Repositories
 
 - [Frontend](https://github.com/Patryk-S-W/tech-blog-frontend): Angular 21,
-  NgModules, server-side rendering, Jest.
+  Nx 24 feature libraries, NgModules, SignalStore facades, SSR and Jest.
 - [Backend](https://github.com/Patryk-S-W/tech-blog-backend): .NET 10,
   controllers, application/domain/infrastructure layers, EF Core and JWT.
 - Database: PostgreSQL 17.
 
-Use Node 22 for the frontend, the .NET 10 SDK for the backend, and Docker Engine
-with Compose v2 for container deployment. The pinned frontend is not an Nx
-workspace; use its npm scripts rather than `nx` commands.
+Use Node 22.13 or newer within Node 22 for the frontend, the .NET 10 SDK for the
+backend, and Docker Engine with Compose v2 for container deployment. Frontend npm
+scripts run the corresponding Nx targets.
 
 ## Start with Docker
 
@@ -42,6 +42,7 @@ to the backend; no public database or backend port is required.
 | `/api/v1/blog/announcements` | Published articles |
 | `/api/v1/blog/projects` | Published projects |
 | `/api/v1/blog/categories` | Article categories |
+| `/blog/:id` | Public article detail, including SSR not-found handling |
 
 The backend applies checked-in EF migrations on startup. There is no default
 account or demo content. Public registration is disabled because authenticated
@@ -59,14 +60,18 @@ npm run build:prod
 ```
 
 Frontend development API configuration is in
-`frontend/src/environments/environment.ts`. Container production uses same-origin
+`frontend/apps/blog/src/environments/environment.ts`. Container production uses same-origin
 API requests through nginx; setting a container `API_URL` does not rewrite an
-Angular build.
+Angular build. SSR uses the trusted `BACKEND_UPSTREAM` setting rather than the
+incoming request's host to reach the API.
 
 Before starting or testing the backend, provide `ConnectionStrings__Postgres_Db`
 for a reachable PostgreSQL database and `AppSettings__Token` for a signing key
-of at least 64 UTF-8 bytes. Integration tests need a **separate disposable
-database**, never the live database.
+of at least 64 UTF-8 bytes. Integration tests instead require explicit
+`TECHBLOG_TEST_CONNECTION` and `TECHBLOG_TEST_JWT_KEY`. The connection must point
+to localhost or 127.0.0.1 and a disposable `techblog_test_*` database; the test key
+must contain at least 64 UTF-8 bytes. Missing settings stop test-host startup.
+Tests apply real migrations, so never supply a live database.
 
 ```sh
 cd backend
@@ -79,14 +84,16 @@ dotnet test TechBlog.sln --configuration Release
 ```text
 tech-blog/
 ├── frontend/                    # Git submodule
-│   ├── src/app/                 # Modules, services and stores
-│   ├── server.ts                # Express / Angular SSR
+│   ├── apps/blog/               # Angular composition and Express SSR
+│   ├── libs/                    # Auth, articles, projects, shell and shared
+│   ├── nx.json
 │   └── Dockerfile
 ├── backend/                     # Git submodule
 │   ├── src/TechBlog.Domain/
 │   ├── src/TechBlog.Application/
 │   ├── src/TechBlog.Infrastructure/
 │   ├── src/TechBlog.WebApi/
+│   ├── src/TechBlog.OwnerCli/    # Private account provisioning
 │   └── tests/TechBlog.Tests/
 ├── docker-compose.yml           # Local bridge network
 ├── compose.production.yml       # Standalone Linux host-network deployment
