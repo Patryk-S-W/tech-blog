@@ -47,16 +47,33 @@ for the blog. Do not reload a firewall file that flushes existing rules.
 Back up existing data before upgrading, because backend startup runs migrations:
 
 ```sh
-umask 077
-docker compose -f compose.production.yml exec -T postgres \
-  pg_dump -h 127.0.0.1 -p 15432 -U techblog -d techblog -Fc > backup.dump
-test -s backup.dump
-docker compose -f compose.production.yml exec -T postgres \
-  pg_restore --list < backup.dump > /dev/null
+backup_directory="$HOME/.local/share/tech-blog/backups"
+bash scripts/backup-postgres.sh "$PWD/compose.production.yml" "$PWD" \
+  tech-blog "$PWD/.env" "$backup_directory" 15432
 ```
 
-On a first installation there is no database to back up. Keep backup files
-restricted and copy them off-host; rehearse restoration separately.
+The Linux script creates a validated custom-format dump and SHA-256 sidecar with
+private permissions. It requires the complete Compose context and never replaces
+an existing backup. For `docker-compose.yml`, use the container port `5432`.
+On a first installation there is no database to back up.
+
+Use the filename printed by the backup command in place of `NAME.dump`:
+
+```sh
+(cd "$backup_directory" && sha256sum --check NAME.dump.sha256)
+bash scripts/verify-postgres-restore.sh "$backup_directory/NAME.dump"
+```
+
+The restore check accepts no live database target. It restores only into its own
+temporary PostgreSQL 17 container, with no network, published ports or persistent
+storage, then removes that container. It uses RAM-backed storage, so large dumps
+may exceed available memory. Only check trusted dumps: Docker access is privileged.
+
+Dumps contain sensitive account and token data and are not encrypted. Local copies
+do not protect against losing the VPS. No off-site destination has been selected;
+uploads and scheduling remain disabled until storage, encryption and retention
+have been agreed. Never treat a successful local restore check as proof of off-site
+backup protection.
 
 ```sh
 docker compose -f compose.production.yml config --quiet
@@ -96,6 +113,16 @@ python tests/verify_compose.py
 It validates both manifests using temporary test-only environment values, and
 checks private database/API access, API wiring, host bindings and persistent
 volume names. It never starts containers.
+
+On Linux, check backup script syntax and run the fake-Docker regression tests:
+
+```sh
+bash -n scripts/backup-postgres.sh scripts/verify-postgres-restore.sh
+python3 tests/verify_backups.py
+```
+
+These tests do not establish that a real dump can be restored. Run the isolated
+restore check separately before relying on a backup.
 
 Keep prior release tags. For a code-only rollback, restore the previous `RELEASE`
 in `.env` and run `docker compose -f compose.production.yml up -d --no-build`.
